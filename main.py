@@ -130,6 +130,7 @@ class Day2Submarine:
     down 8
     forward 2
 
+    --- Part 1 ---
     Your horizontal position and depth both start at 0. The steps above would then modify them as follows:
 
     forward 5 adds 5 to your horizontal position, a total of 5. down 5 adds 5 to your depth, resulting in a value of
@@ -137,6 +138,30 @@ class Day2Submarine:
     value of 2. down 8 adds 8 to your depth, resulting in a value of 10. forward 2 adds 2 to your horizontal
     position, a total of 15. After following these instructions, you would have a horizontal position of 15 and a
     depth of 10. (Multiplying these together produces 150.)
+
+    --- Part Two ---
+    Based on your calculations, the planned course doesn't seem to make any sense. You find the
+    submarine manual and discover that the process is actually slightly more complicated.
+
+    In addition to horizontal position and depth, you'll also need to track a third value, aim, which also starts at
+    0. The commands also mean something entirely different from you first thought:
+
+    down X increases your aim by X units. up X decreases your aim by X units. forward X does two things: It increases
+    your horizontal position by X units. It increases your depth by your aim multiplied by X. Again note that since
+    you're on a submarine, down and up do the opposite of what you might expect: "down" means aiming in the positive
+    direction.
+
+    Now, the above example does something different:
+
+    forward 5 adds 5 to your horizontal position, a total of 5. Because your aim is 0, your depth does not change.
+    down 5 adds 5 to your aim, resulting in a value of 5.
+    forward 8 adds 8 to your horizontal position, a total of 13. Because your aim is 5, your depth increases by 8*5=40.
+    up 3 decreases your aim by 3, resulting in a value of 2.
+    down 8 adds 8 to your aim, resulting in a value of 10.
+    forward 2 adds 2 to your horizontal position, a total of 15. Because your aim is 10, your depth increases by 2*10=20
+    to a total of 60.
+    After following these
+    new instructions, you would have a horizontal position of 15 and a depth of 60. (Multiplying these produces 900.)
     """
     class Commands(enum.Enum):
         FORWARD = 'forward'
@@ -153,6 +178,7 @@ class Day2Submarine:
     def __init__(self):
         self.position = 0
         self.depth = 0
+        self.aim = 0
         try:
             with open("Day2Data.txt", "r") as f:
                 self.data = tuple((Day2Submarine.Commands.__dict__['_value2member_map_'][d.split()[0]],
@@ -162,13 +188,15 @@ class Day2Submarine:
             print(f"Invalid Command {e.args}")
 
     def processCommand(self, command, step):
+        # noinspection PyUnusedLocal
         match command:
             case Day2Submarine.Commands.FORWARD:
                 self.position += step
+                self.depth += self.aim * step
             case Day2Submarine.Commands.UP:
-                self.depth -= step
+                self.aim -= step
             case Day2Submarine.Commands.DOWN:
-                self.depth += step
+                self.aim += step
             case default:
                 print(f"Invalid Command {command}")
 
