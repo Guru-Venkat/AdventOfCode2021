@@ -530,6 +530,120 @@ class Day4:
                         exit(0)
 
 
+class LocationMap:
+    class Point:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+        def __repr__(self):
+            return f"({self.x}, {self.y})"
+
+    def __init__(self, size):
+        self.size = size
+        self.data = [[0] * size for _ in range(size)]
+
+    def __repr__(self):
+        return '\n'.join(' '.join('.' if point == 0 else str(point) for point in d) for d in self.data)
+
+    def markPoint(self, point: Point):
+        if point.x >= self.size or point.y >= self.size:
+            raise Exception("Point out of Map")
+
+        self.data[point.y][point.x] += 1
+
+    def processLine(self, start: Point, end: Point):
+        if start.x == end.x:
+            self.markHorizontalLine(start.x, start.y, end.y)
+        elif start.y == end.y:
+            self.markVerticalLine(start.y, start.x, end.x)
+        else:
+            self.markOtherLine()
+
+    def markHorizontalLine(self, x, y1, y2):
+        if y1 > y2:
+            y1, y2 = y2, y1
+
+        for y in range(y1, y2 + 1):
+            self.markPoint(LocationMap.Point(x, y))
+
+    def markVerticalLine(self, y, x1, x2):
+        if x1 > x2:
+            x1, x2 = x2, x1
+
+        for x in range(x1, x2 + 1):
+            self.markPoint(LocationMap.Point(x, y))
+
+    def markOtherLine(self):
+        pass
+
+
+class Day5:
+    """
+    --- Day 5: Hydrothermal Venture ---
+
+    You come across a field of hydrothermal vents on the ocean floor! These vents constantly produce large,
+    opaque clouds, so it would be best to avoid them if possible.
+
+    They tend to form in lines; the submarine helpfully produces a list of nearby lines of vents (your puzzle input)
+    for you to review. For example:
+
+    0,9 -> 5,9
+    8,0 -> 0,8
+    9,4 -> 3,4
+    2,2 -> 2,1
+    7,0 -> 7,4
+    6,4 -> 2,0
+    0,9 -> 2,9
+    3,4 -> 1,4
+    0,0 -> 8,8
+    5,5 -> 8,2
+
+    Each line of vents is given as a line segment in the format x1,y1 -> x2,y2 where x1,y1 are the coordinates of one
+    end the line segment and x2,y2 are the coordinates of the other end. These line segments include the points at
+    both ends. In other words:
+
+    An entry like 1,1 -> 1,3 covers points 1,1, 1,2, and 1,3.
+    An entry like 9,7 -> 7,7 covers points 9,7, 8,7, and 7,7.
+    For now, only consider horizontal and vertical lines: lines where either x1 = x2 or y1 = y2.
+
+    So, the horizontal and vertical lines from the above list would produce the following diagram:
+
+    .......1..
+    ..1....1..
+    ..1....1..
+    .......1..
+    .112111211
+    ..........
+    ..........
+    ..........
+    ..........
+    222111....
+
+    In this diagram, the top left corner is 0,0 and the bottom right corner is 9,9. Each position is shown as the
+    number of lines which cover that point or . if no line covers that point. The top-left pair of 1s, for example,
+    comes from 2,2 -> 2,1; the very bottom row is formed by the overlapping lines 0,9 -> 5,9 and 0,9 -> 2,9.
+
+    To avoid the most dangerous areas, you need to determine the number of points where at least two lines overlap.
+    In the above example, this is anywhere in the diagram with a 2 or larger - a total of 5 points.
+    """
+    def __init__(self):
+        with open("Day5Data.txt", "r") as f:
+            self.data = [[point.strip().split(',')
+                          for point in line.strip().split(' -> ')]
+                         for line in f.read().splitlines()]
+            self.data = [[LocationMap.Point(int(point[0]), int(point[1])) for point in line]
+                         for line in self.data]
+            self.locationMap = LocationMap(1000)
+
+    def part1(self):
+        # print(LocationMap(10))
+        for start, end in self.data:
+            self.locationMap.processLine(start, end)
+
+        return sum(1 for line in self.locationMap.data for point in line if point > 1)
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day4().part2())
+    print(Day5().part1())
