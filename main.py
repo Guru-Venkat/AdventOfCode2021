@@ -1,12 +1,4 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+import enum
 
 
 class Day1:
@@ -39,7 +31,7 @@ class Day1:
 
     def __init__(self):
         with open("Day1Data.txt", "r") as f:
-            self.data = [int(d) for d in f.read().splitlines()]
+            self.data = tuple(int(d) for d in f.read().splitlines())
 
     def part1_IncreaseInDepth(self, data=None):
         """
@@ -114,9 +106,79 @@ class Day1:
         In this example, there are 5 sums that are larger than the previous sum.
         :return:
         """
-        return self.part1_IncreaseInDepth([sum(self.data[i: i + 3]) for i in range(len(self.data) - 2)])
+        return self.part1_IncreaseInDepth(tuple(sum(self.data[i: i + 3]) for i in range(len(self.data) - 2)))
+
+
+class Day2Submarine:
+    """
+    --- Day 2: Dive! ---
+    Now, you need to figure out how to pilot this thing.
+
+    It seems like the submarine can take a series of commands like forward 1, down 2, or up 3:
+
+    forward X increases the horizontal position by X units. down X increases the depth by X units. up X decreases the
+    depth by X units. Note that since you're on a submarine, down and up affect your depth, and so they have the
+    opposite result of what you might expect.
+
+    The submarine seems to already have a planned course (your puzzle input). You should probably figure out where it's
+    going. For example:
+
+    forward 5
+    down 5
+    forward 8
+    up 3
+    down 8
+    forward 2
+
+    Your horizontal position and depth both start at 0. The steps above would then modify them as follows:
+
+    forward 5 adds 5 to your horizontal position, a total of 5. down 5 adds 5 to your depth, resulting in a value of
+    5. forward 8 adds 8 to your horizontal position, a total of 13. up 3 decreases your depth by 3, resulting in a
+    value of 2. down 8 adds 8 to your depth, resulting in a value of 10. forward 2 adds 2 to your horizontal
+    position, a total of 15. After following these instructions, you would have a horizontal position of 15 and a
+    depth of 10. (Multiplying these together produces 150.)
+    """
+    class Commands(enum.Enum):
+        FORWARD = 'forward'
+        UP = 'up'
+        DOWN = 'down'
+
+    class InvalidCommandException(Exception):
+        pass
+
+    @property
+    def location(self):
+        return self.position * self.depth
+
+    def __init__(self):
+        self.position = 0
+        self.depth = 0
+        try:
+            with open("Day2Data.txt", "r") as f:
+                self.data = tuple((Day2Submarine.Commands.__dict__['_value2member_map_'][d.split()[0]],
+                                   int(d.split()[1]))
+                                  for d in f.read().splitlines())
+        except KeyError as e:
+            print(f"Invalid Command {e.args}")
+
+    def processCommand(self, command, step):
+        match command:
+            case Day2Submarine.Commands.FORWARD:
+                self.position += step
+            case Day2Submarine.Commands.UP:
+                self.depth -= step
+            case Day2Submarine.Commands.DOWN:
+                self.depth += step
+            case default:
+                print(f"Invalid Command {command}")
+
+    def part1(self):
+        for (command, step) in self.data:
+            self.processCommand(command, step)
+
+        return self.location
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day1().part2_IncreaseInDepthIn3Points())
+    print(Day2Submarine().part1())
