@@ -506,6 +506,7 @@ class Day4:
     middle column is completely marked. If you were to keep playing until this point, the second board would have a
     sum of unmarked numbers equal to 148 for a final score of 148 * 13 = 1924.
     """
+
     def __init__(self):
         with open("Day4Data.txt", "r") as f:
             self.data = tuple(f.read().split('\n\n'))
@@ -544,7 +545,7 @@ class LocationMap:
         self.data = [[0] * size for _ in range(size)]
 
     def __repr__(self):
-        return '\n'.join(' '.join('.' if point == 0 else str(point) for point in d) for d in self.data)
+        return '\n'.join(''.join('.' if point == 0 else str(point) for point in d) for d in self.data)
 
     def markPoint(self, point: Point):
         if point.x >= self.size or point.y >= self.size:
@@ -552,30 +553,45 @@ class LocationMap:
 
         self.data[point.y][point.x] += 1
 
-    def processLine(self, start: Point, end: Point):
-        if start.x == end.x:
-            self.markHorizontalLine(start.x, start.y, end.y)
-        elif start.y == end.y:
-            self.markVerticalLine(start.y, start.x, end.x)
-        else:
-            self.markOtherLine()
+    def markPoints(self, points: list[Point]):
+        # print(points)
+        for point in points:
+            self.markPoint(point)
 
-    def markHorizontalLine(self, x, y1, y2):
+    def markLine(self, start: Point, end: Point):
+        self.markPoints(self.pointsInLine(start, end))
+
+    def pointsInLine(self, start: Point, end: Point):
+        if start.x == end.x:
+            return self._pointsInHorizontalLine(start.x, start.y, end.y)
+        elif start.y == end.y:
+            return self._pointsInVerticalLine(start.y, start.x, end.x)
+        elif abs(start.x - end.x) == abs(start.y - end.y):
+            return self._pointsInDiagonalLine(start, end)
+        else:
+            return []
+
+    @staticmethod
+    def _pointsInHorizontalLine(x, y1, y2) -> list[Point]:
         if y1 > y2:
             y1, y2 = y2, y1
 
-        for y in range(y1, y2 + 1):
-            self.markPoint(LocationMap.Point(x, y))
+        return [LocationMap.Point(x, y) for y in range(y1, y2 + 1)]
 
-    def markVerticalLine(self, y, x1, x2):
+    @staticmethod
+    def _pointsInVerticalLine(y, x1, x2) -> list[Point]:
         if x1 > x2:
             x1, x2 = x2, x1
 
-        for x in range(x1, x2 + 1):
-            self.markPoint(LocationMap.Point(x, y))
+        return [LocationMap.Point(x, y) for x in range(x1, x2 + 1)]
 
-    def markOtherLine(self):
-        pass
+    @staticmethod
+    def _pointsInDiagonalLine(start: Point, end: Point):
+        if start.x > end.x:
+            start, end = end, start
+        movementY = 1 if start.y < end.y else -1
+
+        return [LocationMap.Point(x, y) for x, y in zip(range(start.x, end.x + 1), range(start.y, end.y + movementY, movementY))]
 
 
 class Day5:
@@ -626,7 +642,32 @@ class Day5:
 
     To avoid the most dangerous areas, you need to determine the number of points where at least two lines overlap.
     In the above example, this is anywhere in the diagram with a 2 or larger - a total of 5 points.
+
+    --- Part Two --- Unfortunately, considering only horizontal and vertical lines doesn't give you the full picture;
+    you need to also consider diagonal lines.
+
+    Because of the limits of the hydrothermal vent mapping system, the lines in your list will only ever be horizontal,
+    vertical, or a diagonal line at exactly 45 degrees. In other words:
+
+    An entry like 1,1 -> 3,3 covers points 1,1, 2,2, and 3,3.
+    An entry like 9,7 -> 7,9 covers points 9,7, 8,8, and 7,9.
+    Considering all lines from the above example would now produce the following diagram:
+
+    1.1....11.
+    .111...2..
+    ..2.1.111.
+    ...1.2.2..
+    .112313211
+    ...1.2....
+    ..1...1...
+    .1.....1..
+    1.......1.
+    222111....
+
+    You still need to determine the number of points where at least two lines overlap. In the above example,
+    this is still anywhere in the diagram with a 2 or larger - now a total of 12 points.
     """
+
     def __init__(self):
         with open("Day5Data.txt", "r") as f:
             self.data = [[point.strip().split(',')
@@ -637,9 +678,10 @@ class Day5:
             self.locationMap = LocationMap(1000)
 
     def part1(self):
-        # print(LocationMap(10))
         for start, end in self.data:
-            self.locationMap.processLine(start, end)
+            self.locationMap.markLine(start, end)
+
+        print(self.locationMap)
 
         return sum(1 for line in self.locationMap.data for point in line if point > 1)
 
