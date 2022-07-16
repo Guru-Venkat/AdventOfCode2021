@@ -65,14 +65,16 @@ class Day6:
     Each day, a 0 becomes a 6 and adds a new 8 to the end of the list, while each other number decreases by 1 if it
     was present at the start of the day.
     
-    In this example, after 18 days, there are a total of 26 fish. After 80 days, there would be a total of 5934.
+    In this example, after 18 days, there are a total of 26 fish. After 80 da ys, there would be a total of 5934.
     """
     def __init__(self):
         with open("Data/Day6Data.txt", "r") as f:
             self.data = [*map(int, f.read().split(','))]
+            self.countAtAge = [self.data.count(i) for i in range(9)]
+            self.iterations = 256
 
     def part1(self):
-        for _ in range(80):
+        for _ in range(self.iterations):
             new_fish = 0
             for i, age in enumerate(self.data):
                 if age == 0:
@@ -81,11 +83,17 @@ class Day6:
                 else:
                     self.data[i] -= 1
             self.data += [8] * new_fish
-            # print(self.data)
-
         return len(self.data)
+
+    def part2(self):
+        print(self.countAtAge)
+        for _ in range(self.iterations):
+            self.countAtAge = self.countAtAge[1:] + [self.countAtAge[0]]
+            self.countAtAge[6] += self.countAtAge[8]
+
+        print(sum(self.countAtAge))
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day6().part1())
+    print(Day6().part2())
