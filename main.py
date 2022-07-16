@@ -126,7 +126,13 @@ class Submarine:
     def powerConsumption(self):
         return self.gammaRate * self.epsilonRate
 
+    @property
+    def lifeSupportRating(self):
+        return self.oxygenGeneratorRating * self.co2ScrubberRating
+
     def __init__(self):
+        self.oxygenGeneratorRating = 0
+        self.co2ScrubberRating = 0
         self.position = 0
         self.depth = 0
         self.aim = 0
@@ -147,19 +153,60 @@ class Submarine:
                 print(f"Invalid Command {command}")
 
     def processDiagnostic(self, diagnostic_data):
-        data = tuple(map(tuple, zip(*diagnostic_data)))  # Transpose the 2D list
+        self._calculateGammaRate(diagnostic_data)
+        self._calculateEpsilonRate(diagnostic_data)
+        self._calculateOxygenGeneratorRating(diagnostic_data)
+        self._calculateCO2ScrubberRating(diagnostic_data)
+
+    def _calculateGammaRate(self, data):
+        data = tuple(map(tuple, zip(*data)))  # Transpose the 2D list
         gammaRate = ''
-        epsilonRate = ''
+
         for d in data:
-            if d.count('1') > len(diagnostic_data) / 2:
+            if d.count('1') >= len(d) / 2:
                 gammaRate += '1'
-                epsilonRate += '0'
             else:
                 gammaRate += '0'
-                epsilonRate += '1'
 
         self.gammaRate = int(gammaRate, 2)
+        return gammaRate
+
+    def _calculateEpsilonRate(self, data):
+        data = tuple(map(tuple, zip(*data)))  # Transpose the 2D list
+        epsilonRate = ''
+
+        for d in data:
+            if d.count('1') >= len(d) / 2:
+                epsilonRate += '0'
+            else:
+                epsilonRate += '1'
+
         self.epsilonRate = int(epsilonRate, 2)
+        return epsilonRate
+
+    def _calculateOxygenGeneratorRating(self, data: list):
+        for i in range(len(data[0])):
+            if len(data) == 1:
+                self.oxygenGeneratorRating = int(data[0], 2)
+                return data[0]
+            else:
+                data = [x for x in data if x[i] == self._calculateGammaRate(data)[i]]
+
+        if len(data) == 1:
+            self.oxygenGeneratorRating = int(data[0], 2)
+            return data[0]
+
+    def _calculateCO2ScrubberRating(self, data: list):
+        for i in range(len(data[0])):
+            if len(data) == 1:
+                self.co2ScrubberRating = int(data[0], 2)
+                return data[0]
+            else:
+                data = [x for x in data if x[i] == self._calculateEpsilonRate(data)[i]]
+
+        if len(data) == 1:
+            self.co2ScrubberRating = int(data[0], 2)
+            return data[0]
 
 
 class Day2:
@@ -276,18 +323,61 @@ class Day3:
     The epsilon rate is calculated in a similar way; rather than use the most common bit, the least common bit from
     each position is used. So, the epsilon rate is 01001, or 9 in decimal. Multiplying the gamma rate (22) by the
     epsilon rate (9) produces the power consumption, 198.
+
+    --- Part Two --- Next, you should verify the life support rating, which can be determined by multiplying the
+    oxygen generator rating by the CO2 scrubber rating.
+
+    Both the oxygen generator rating and the CO2 scrubber rating are values that can be found in your diagnostic
+    report - finding them is the tricky part. Both values are located using a similar process that involves filtering
+    out values until only one remains. Before searching for either rating value, start with the full list of binary
+    numbers from your diagnostic report and consider just the first bit of those numbers. Then:
+
+    Keep only numbers selected by the bit criteria for the type of rating value for which you are searching. Discard
+    numbers which do not match the bit criteria. If you only have one number left, stop; this is the rating value for
+    which you are searching. Otherwise, repeat the process, considering the next bit to the right. The bit criteria
+    depends on which type of rating value you want to find:
+
+    To find oxygen generator rating, determine the most common value (0 or 1) in the current bit position,
+    and keep only numbers with that bit in that position. If 0 and 1 are equally common, keep values with a 1 in the
+    position being considered. To find CO2 scrubber rating, determine the least common value (0 or 1) in the current
+    bit position, and keep only numbers with that bit in that position. If 0 and 1 are equally common, keep values
+    with a 0 in the position being considered. For example, to determine the oxygen generator rating value using the
+    same example diagnostic report from above:
+
+    Start with all 12 numbers and consider only the first bit of each number. There are more 1 bits (7) than 0 bits (
+    5), so keep only the 7 numbers with a 1 in the first position: 11110, 10110, 10111, 10101, 11100, 10000,
+    and 11001. Then, consider the second bit of the 7 remaining numbers: there are more 0 bits (4) than 1 bits (3),
+    so keep only the 4 numbers with a 0 in the second position: 10110, 10111, 10101, and 10000. In the third
+    position, three of the four numbers have a 1, so keep those three: 10110, 10111, and 10101. In the fourth
+    position, two of the three numbers have a 1, so keep those two: 10110 and 10111. In the fifth position,
+    there are an equal number of 0 bits and 1 bits (one each). So, to find the oxygen generator rating,
+    keep the number with a 1 in that position: 10111. As there is only one number left, stop; the oxygen generator
+    rating is 10111, or 23 in decimal. Then, to determine the CO2 scrubber rating value from the same example above:
+
+    Start again with all 12 numbers and consider only the first bit of each number. There are fewer 0 bits (5) than 1
+    bits (7), so keep only the 5 numbers with a 0 in the first position: 00100, 01111, 00111, 00010, and 01010. Then,
+    consider the second bit of the 5 remaining numbers: there are fewer 1 bits (2) than 0 bits (3), so keep only the
+    2 numbers with a 1 in the second position: 01111 and 01010. In the third position, there are an equal number of 0
+    bits and 1 bits (one each). So, to find the CO2 scrubber rating, keep the number with a 0 in that position:
+    01010. As there is only one number left, stop; the CO2 scrubber rating is 01010, or 10 in decimal. Finally,
+    to find the life support rating, multiply the oxygen generator rating (23) by the CO2 scrubber rating (10) to get
+    230.
+
     """
 
     def __init__(self):
         with open("Day3Data.txt", "r") as f:
             self.data = tuple(f.read().splitlines())
             self.submarine = Submarine()
+            self.submarine.processDiagnostic(self.data)
 
     def part1(self):
-        self.submarine.processDiagnostic(self.data)
         return self.submarine.powerConsumption
+
+    def part2(self):
+        return self.submarine.lifeSupportRating
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day3().part1())
+    print(Day3().part2())
