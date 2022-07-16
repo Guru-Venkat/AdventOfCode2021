@@ -494,6 +494,17 @@ class Day4:
 
     To guarantee victory against the giant squid, figure out which board will win first. What will your final score
     be if you choose that board?
+
+    --- Part Two ---
+    On the other hand, it might be wise to try a different strategy: let the giant squid win.
+
+    You aren't sure how many bingo boards a giant squid could play at once, so rather than waste time counting its
+    arms, the safe thing to do is to figure out which board will win last and choose that one. That way,
+    no matter which boards it picks, it will win for sure.
+
+    In the above example, the second board is the last to win, which happens after 13 is eventually called and its
+    middle column is completely marked. If you were to keep playing until this point, the second board would have a
+    sum of unmarked numbers equal to 148 for a final score of 148 * 13 = 1924.
     """
     def __init__(self):
         with open("Day4Data.txt", "r") as f:
@@ -503,12 +514,22 @@ class Day4:
 
     def part1(self):
         for roll in self.rolls:
-            for board in self.boards:
+            for i, board in enumerate(self.boards):
                 if board.processDraw(roll):
                     print(board.calculateScore(), roll)
                     exit(0)
 
+    def part2(self):
+        boardWon = [False] * len(self.boards)
+        for roll in self.rolls:
+            for i, board in enumerate(self.boards):
+                if board.processDraw(roll):
+                    boardWon[i] = True
+                    if all(boardWon):
+                        print(board.calculateScore(), roll)
+                        exit(0)
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day4().part1())
+    print(Day4().part2())
