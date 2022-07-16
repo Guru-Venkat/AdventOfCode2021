@@ -109,7 +109,39 @@ class Day1:
         return self.part1_IncreaseInDepth(tuple(sum(self.data[i: i + 3]) for i in range(len(self.data) - 2)))
 
 
-class Day2Submarine:
+class Submarine:
+    class Commands(enum.Enum):
+        FORWARD = 'forward'
+        UP = 'up'
+        DOWN = 'down'
+
+    class InvalidCommandException(Exception):
+        pass
+
+    @property
+    def location(self):
+        return self.position * self.depth
+
+    def __init__(self):
+        self.position = 0
+        self.depth = 0
+        self.aim = 0
+
+    def processCommand(self, command, step):
+        # noinspection PyUnusedLocal
+        match command:
+            case Submarine.Commands.FORWARD:
+                self.position += step
+                self.depth += self.aim * step
+            case Submarine.Commands.UP:
+                self.aim -= step
+            case Submarine.Commands.DOWN:
+                self.aim += step
+            case default:
+                print(f"Invalid Command {command}")
+
+
+class Day2:
     """
     --- Day 2: Dive! ---
     Now, you need to figure out how to pilot this thing.
@@ -163,50 +195,24 @@ class Day2Submarine:
     After following these
     new instructions, you would have a horizontal position of 15 and a depth of 60. (Multiplying these produces 900.)
     """
-    class Commands(enum.Enum):
-        FORWARD = 'forward'
-        UP = 'up'
-        DOWN = 'down'
-
-    class InvalidCommandException(Exception):
-        pass
-
-    @property
-    def location(self):
-        return self.position * self.depth
 
     def __init__(self):
-        self.position = 0
-        self.depth = 0
-        self.aim = 0
+        self.submarine = Submarine()
         try:
             with open("Day2Data.txt", "r") as f:
-                self.data = tuple((Day2Submarine.Commands.__dict__['_value2member_map_'][d.split()[0]],
+                self.data = tuple((Submarine.Commands.__dict__['_value2member_map_'][d.split()[0]],
                                    int(d.split()[1]))
                                   for d in f.read().splitlines())
         except KeyError as e:
             print(f"Invalid Command {e.args}")
 
-    def processCommand(self, command, step):
-        # noinspection PyUnusedLocal
-        match command:
-            case Day2Submarine.Commands.FORWARD:
-                self.position += step
-                self.depth += self.aim * step
-            case Day2Submarine.Commands.UP:
-                self.aim -= step
-            case Day2Submarine.Commands.DOWN:
-                self.aim += step
-            case default:
-                print(f"Invalid Command {command}")
-
     def part1(self):
         for (command, step) in self.data:
-            self.processCommand(command, step)
+            self.submarine.processCommand(command, step)
 
-        return self.location
+        return self.submarine.location
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print(Day2Submarine().part1())
+    print(Day2().part1())
